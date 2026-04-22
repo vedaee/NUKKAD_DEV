@@ -1,0 +1,476 @@
+// App
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
+import storage from "@react-native-firebase/storage";
+import { launchImageLibrary } from "react-native-image-picker";
+
+export default function App() {
+  // -----------------------
+  // GLOBAL STATES
+  // -----------------------
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
+  const [profileSetup, setProfileSetup] = useState(false);
+  const [name, setName] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Login/OTP states
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [confirm, setConfirm] = useState(null);
+
+  // Chat states
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const flatListRef = useRef(null);
+
+  // -----------------------
+  // AUTH LISTENER
+  // -----------------------
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+      if (!firebaseUser) {
+        setUser(null);
+        setInitializing(false);
+        return;
+      }
+
+      try {
+        const uid = firebaseUser.uid;
+        const doc = await firestore().collection("users").doc(uid).get();
+
+        if (!doc.exists) {
+          await firestore().collection("users").doc(uid).set({
+            uid,
+            phone: firebaseUser.phoneNumber || "",
+            name: "",
+            profilePic: "",
+            isOnline: true,
+            blocked: false,
+            createdAt: firestore.FieldValue.serverTimestamp(),
+          });
+          setProfileSetup(true);
+        } else {
+          const data = doc.data();
+          if (!data?.name || !data?.profilePic) {
+            setProfileSetup(true);
+          } else {
+            setName(data.name);
+          }
+        }
+
+        setUser(firebaseUser);
+      } catch (err) {
+        console.log("Firestore error:", err);
+        Alert.alert("Firestore Error", "Check console logs");
+      }
+
+      setInitializing(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // -----------------------
+  // SEND OTP
+  // -----------------------
+  const sendOtp = async () => {
+    if (!phone) {
+      Alert.alert("Error", "Enter phone number with country code");
+      return;
+    }
+
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phone);
+      setConfirm(confirmation);
+    } catch (error) {
+      console.log("OTP Error:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  // -----------------------
+  // VERIFY OTP
+  // -----------------------
+  const verifyOtp = async () => {
+    if (!otp || !confirm) {
+      Alert.alert("Error", "Enter OTP");
+      return;
+    }
+
+    try {
+      await confirm.confirm(otp);
+      setConfirm(null);
+      setProfileSetup(true);
+    } catch (error) {
+      Alert.alert("Invalid OTP");
+    }
+  };
+
+  // -----------------------
+  // PICK IMAGE
+  // -----------------------
+  const pickImage = async () => {
+    const result = await launchImageLibrary({ mediaType: "photo" });
+    if (!result.didCancel && result.assets?.length) {
+      setPhoto(result.assets[0]);
+    }
+  };
+
+  // -----------------------
+  // SAVE PROFILE
+  // -----------------------
+  const saveProfile = async () => {
+    if (!name) {
+      Alert.alert("Enter your name");
+      return;
+    }
+
+    if (!user) return;
+
+    try {
+      setUploading(true);
+      let photoURL = "";
+
+      if (photo) {
+        const ref = storage().ref(`profilePics/${user.uid}.jpg`);
+        await ref.putFile(photo.uri);
+        photoURL = await ref.getDownloadURL();
+      } else {
+        photoURL = "https://i.pravatar.cc/300";
+      }
+
+      await firestore()
+        .collection("users")
+        .doc(user.uid)
+        .set(
+          {
+            uid: user.uid,
+            phone: user.phoneNumber || "",
+            name,
+            profilePic: photoURL,
+            isOnline: true,
+            blocked: false,
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+      setProfileSetup(false);
+      setName(name);
+      loadContacts();
+    } catch (err) {
+      console.log("Profile Save Error:", err);
+      Alert.alert("Error", err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // -----------------------
+  // LOAD CONTACTS
+  // -----------------------
+  const loadContacts = () => {
+    if (!user) return;
+
+    return firestore()
+      .collection("users")
+      .where("uid", "!=", user.uid)
+      .onSnapshot((snapshot) => {
+        const list = snapshot.docs.map((doc) => doc.data());
+        setContacts(list);
+      });
+  };
+
+  // -----------------------
+  // CHAT LOGIC
+  // -----------------------
+  const chatId = selectedContact
+    ? user.uid > selectedContact.uid
+      ? user.uid + "_" + selectedContact.uid
+      : selectedContact.uid + "_" + user.uid
+    : null;
+
+  useEffect(() => {
+    if (!chatId) return;
+
+    const unsubscribe = firestore()
+      .collection("chats")
+      .doc(chatId)
+      .collection("messages")
+      .orderBy("createdAt", "asc")
+      .onSnapshot((snapshot) => {
+        const msgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setMessages(msgs);
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      });
+
+    return () => unsubscribe();
+  }, [chatId]);
+
+  const sendMessage = async () => {
+    if (!text.trim() || !selectedContact) return;
+
+    await firestore()
+      .collection("chats")
+      .doc(chatId)
+      .collection("messages")
+      .add({
+        text,
+        from: user.uid,
+        to: selectedContact.uid,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      });
+
+    setText("");
+  };
+
+  // -----------------------
+  // INITIALIZING SCREEN
+  // -----------------------
+  if (initializing) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  // -----------------------
+  // LOGIN SCREEN
+  // -----------------------
+  if (!user) {
+    if (!confirm) {
+      return (
+        <View style={styles.center}>
+          <Image source={require("./assets/logo.png")} style={styles.logo} />
+          <Text style={styles.title}>NUKKAD Login</Text>
+
+          <TextInput
+            placeholder="+91XXXXXXXXXX"
+            value={phone}
+            onChangeText={setPhone}
+            style={styles.input}
+            keyboardType="phone-pad"
+          />
+
+          <TouchableOpacity style={styles.button} onPress={sendOtp}>
+            <Text style={styles.buttonText}>Send OTP</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.center}>
+        <Text style={styles.title}>Enter OTP</Text>
+
+        <TextInput
+          placeholder="123456"
+          value={otp}
+          onChangeText={setOtp}
+          style={styles.input}
+          keyboardType="number-pad"
+        />
+
+        <TouchableOpacity style={styles.button} onPress={verifyOtp}>
+          <Text style={styles.buttonText}>Verify</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // -----------------------
+  // PROFILE SETUP
+  // -----------------------
+  if (profileSetup) {
+    return (
+      <View style={styles.center}>
+        <Image source={require("./assets/logo.png")} style={styles.logo} />
+        <Text style={styles.title}>Complete Profile</Text>
+
+        <TouchableOpacity onPress={pickImage}>
+          <Image
+            source={{ uri: photo ? photo.uri : "https://i.pravatar.cc/300" }}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
+
+        <TextInput
+          placeholder="Your Name"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
+
+        <TouchableOpacity
+          style={[styles.button, uploading && { opacity: 0.6 }]}
+          onPress={saveProfile}
+          disabled={uploading}
+        >
+          <Text style={styles.buttonText}>{uploading ? "Saving..." : "Save Profile"}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // -----------------------
+  // CONTACTS SCREEN
+  // -----------------------
+  if (!selectedContact) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Contacts</Text>
+        <FlatList
+          data={contacts}
+          keyExtractor={(item) => item.uid}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.contactItem}
+              onPress={() => setSelectedContact(item)}
+            >
+              <Image source={{ uri: item.profilePic }} style={styles.avatarSmall} />
+              <View style={{ marginLeft: 12 }}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={{ color: item.isOnline ? "green" : "gray", fontSize: 12 }}>
+                  {item.isOnline ? "Online" : "Offline"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+        <TouchableOpacity
+          style={[styles.button, { marginTop: 20 }]}
+          onPress={() => auth().signOut()}
+        >
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // -----------------------
+  // CHAT SCREEN
+  // -----------------------
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={90}
+    >
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          const isMe = item.from === user.uid;
+          return (
+            <View
+              style={[
+                styles.messageContainer,
+                isMe ? styles.myMessage : styles.theirMessage,
+              ]}
+            >
+              <Text style={{ color: isMe ? "#fff" : "#000" }}>{item.text}</Text>
+            </View>
+          );
+        }}
+        contentContainerStyle={{ padding: 10 }}
+      />
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          placeholder="Type a message..."
+          value={text}
+          onChangeText={setText}
+          style={styles.inputMessage}
+        />
+        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>Send</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+// -----------------------
+// STYLES
+// -----------------------
+const styles = StyleSheet.create({
+  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  container: { flex: 1, backgroundColor: "#fff", padding: 10 },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 20 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    width: 250,
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 10,
+    textAlign: "center",
+  },
+  button: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    borderRadius: 10,
+    width: 160,
+    alignItems: "center",
+  },
+  buttonText: { color: "#fff", fontWeight: "bold" },
+  avatar: { width: 110, height: 110, borderRadius: 55, marginBottom: 20 },
+  logo: { width: 120, height: 120, marginBottom: 30, resizeMode: "contain" },
+  contactItem: {
+    flexDirection: "row",
+    padding: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#ddd",
+    alignItems: "center",
+  },
+  avatarSmall: { width: 50, height: 50, borderRadius: 25 },
+  name: { fontSize: 16, fontWeight: "bold" },
+  messageContainer: {
+    maxWidth: "75%",
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  myMessage: { backgroundColor: "#0066FF", alignSelf: "flex-end" },
+  theirMessage: { backgroundColor: "#eee", alignSelf: "flex-start" },
+  inputContainer: {
+    flexDirection: "row",
+    padding: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: "#ccc",
+    alignItems: "center",
+  },
+  inputMessage: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  sendButton: { backgroundColor: "#0066FF", borderRadius: 25, padding: 10, justifyContent: "center" },
+});

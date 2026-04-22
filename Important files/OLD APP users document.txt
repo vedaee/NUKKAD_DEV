@@ -1,0 +1,76 @@
+OLD APP users document:
+
+01R2TfeLNTeigvCWephYO28QSpn1
+createdAt
+December 9, 2025 at 7:55:53 PM UTC+5:30
+(timestamp)
+
+
+email
+"jitendra@gmail.com"
+(string)
+
+
+fcmToken
+"cDql1UyGRIfzMRLV8JvO1_:APA91bFwRazINGWVtuI_b1EkkuWA2oychNYBw8oXaWyNTJHcqf-soh5GpRtC_S7az8HViVgXaV9n-OnItkIRGBPU9i5ojl0TChi2nwCOPhhPHe6Xbuutiy8"
+(string)
+
+
+name
+"Jitendra Momaya"
+(string)
+
+
+phone
+"+919324399607"
+(string)
+
+
+uid
+"01R2TfeLNTeigvCWephYO28QSpn1"
+(string)
+
+
+updatedAt
+1772517105516
+
+NEW app Document:
+
+sBcwLTuEVeO48C29DbAZ3fwF7GB2
+createdAt
+March 6, 2026 at 2:37:27 PM UTC+5:30
+(timestamp)
+
+
+fcmToken
+"eF2JJwnGTyKVo1xyRubpRG:APA91bECGFDmCfbYRzEUx1A3HTDIajjHfh1dPAvyEcwIyzS4qtt98_asKGc_SrQcGXCmphizbVj2h4mg5i2VFsO1cUspHdDUjXKD0i8hOC7b4YFWfyC7FnU"
+(string)
+
+
+isOnline
+false
+(boolean)
+
+
+lastSeen
+March 6, 2026 at 2:47:08 PM UTC+5:30
+(timestamp)
+
+
+name
+"NUKKAD User"
+(string)
+
+
+phone
+"+911234567890"
+(string)
+
+
+profilePic
+"https://firebasestorage.googleapis.com/v0/b/nukkad-edc40.firebasestorage.app/o/profilePhotos%2FsBcwLTuEVeO48C29DbAZ3fwF7GB2%2F1772786397462.jpg?alt=media&token=c445b6c2-eec1-4266-97dc-290cfb33004c"
+(string)
+
+
+uid
+"sBcwLTuEVeO48C29DbAZ3fwF7GB2"

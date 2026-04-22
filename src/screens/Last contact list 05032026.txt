@@ -1,0 +1,386 @@
+Last contact list 05/03/2026 
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
+import PushNotification from "react-native-push-notification";
+import Ionicons from "@react-native-vector-icons/ionicons";
+
+export default function ContactListScreen({ navigation }) {
+  const currentUid = auth().currentUser?.uid;
+
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  // -----------------------------
+  // CURRENT USER PROFILE
+  // -----------------------------
+  useEffect(() => {
+    if (!currentUid) return;
+
+    const unsubscribe = firestore()
+      .collection("users")
+      .doc(currentUid)
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          setCurrentUserData(doc.data());
+        }
+      });
+
+    return unsubscribe;
+  }, [currentUid]);
+
+  // -----------------------------
+  // CHAT LIST
+  // -----------------------------
+  useEffect(() => {
+    if (!currentUid) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = firestore()
+      .collection("chats")
+      .where("participants", "array-contains", currentUid)
+      .onSnapshot(
+        async (snapshot) => {
+          if (!snapshot || snapshot.empty) {
+            setUsers([]);
+            setTotalUnread(0);
+            setLoading(false);
+            return;
+          }
+
+          const chatList = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const chatData = doc.data();
+              const chatId = doc.id;
+
+              const isGroup = chatData.isGroup === true;
+
+              // GROUP CHAT
+              if (isGroup) {
+                return {
+                  id: chatId,
+                  chatId: chatId,
+                  name: chatData.name || "Group",
+                  profilePic: chatData.groupPhoto || null,
+                  lastMessage: chatData.lastMessage || "",
+                  unreadCount: chatData.unreadCount?.[currentUid] || 0,
+                  isTyping: false,
+                  isGroup: true,
+                };
+              }
+
+              // PERSONAL CHAT
+              const otherUserId = chatData.participants.find(
+                (id) => id !== currentUid
+              );
+
+              if (!otherUserId) return null;
+
+              const userDoc = await firestore()
+                .collection("users")
+                .doc(otherUserId)
+                .get({ source: "server" });
+
+              if (!userDoc.exists) return null;
+
+              const userData = userDoc.data();
+
+              return {
+                id: otherUserId,
+                chatId: chatId,
+                name: userData.name || "Unknown",
+                phone: userData.phone || "",
+                profilePic: userData.profilePic || null,
+                lastMessage: chatData.lastMessage || "",
+                unreadCount: chatData.unreadCount?.[currentUid] || 0,
+                isTyping: chatData.typing?.[otherUserId] || false,
+                isGroup: false,
+              };
+            })
+          );
+
+          const filtered = chatList.filter(Boolean);
+
+          setUsers(filtered);
+          setLoading(false);
+
+          const total = filtered.reduce(
+            (acc, item) => acc + (item.unreadCount || 0),
+            0
+          );
+
+          setTotalUnread(total);
+        },
+        (error) => {
+          console.log("CHAT LISTENER ERROR:", error);
+          setLoading(false);
+        }
+      );
+
+    return unsubscribe;
+  }, [currentUid]);
+
+  // -----------------------------
+  // BADGE COUNT
+  // -----------------------------
+  useEffect(() => {
+    if (!currentUid) return;
+
+    const unsubscribe = firestore()
+      .collectionGroup("messages")
+      .where("receiverId", "==", currentUid)
+      .where("seen", "==", false)
+      .onSnapshot((snapshot) => {
+        PushNotification.setApplicationIconBadgeNumber(
+          snapshot?.size || 0
+        );
+      });
+
+    return unsubscribe;
+  }, [currentUid]);
+
+  // -----------------------------
+  // CHAT ROW
+  // -----------------------------
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.userRow}
+      onPress={() =>
+        navigation.navigate("Chat", {
+          chatId: item.chatId,
+          userId: item.isGroup ? null : item.id,
+          userName: item.name,
+          userPhoto: item.profilePic,
+          groupId: item.isGroup ? item.chatId : null,
+          groupName: item.isGroup ? item.name : null,
+          isGroup: item.isGroup,
+        })
+      }
+    >
+      <Image
+        source={{
+          uri: item.profilePic
+            ? item.profilePic + "?t=" + new Date().getTime()
+            : "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+        }}
+        style={styles.avatar}
+      />
+
+      <View style={styles.textContainer}>
+        <Text
+          style={[
+            styles.name,
+            item.isGroup && { color: "#00ff88" },
+          ]}
+        >
+          {item.name}
+        </Text>
+
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.message,
+            item.unreadCount > 0 && styles.unreadText,
+          ]}
+        >
+          {item.isTyping
+            ? "typing..."
+            : item.lastMessage || "Tap to chat"}
+        </Text>
+      </View>
+
+      {item.unreadCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {item.unreadCount}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  // -----------------------------
+  // LOADING
+  // -----------------------------
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#00ff88" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Image
+          source={{
+            uri:
+              currentUserData?.profilePic ||
+              "https://i.pravatar.cc/150",
+          }}
+          style={styles.headerAvatar}
+        />
+
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={styles.headerTitle}>NUKKAD</Text>
+
+          {totalUnread > 0 && (
+            <View style={styles.headerBadge}>
+              <Text style={styles.headerBadgeText}>
+                {totalUnread}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("NewChat", { groupMode: true })
+            }
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons
+              name="people-outline"
+              size={26}
+              color="#00ff88"
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => auth().signOut()}>
+            <Text style={styles.logout}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <FlatList
+        data={users}
+        keyExtractor={(item) => item.chatId}
+        renderItem={renderItem}
+      />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate("NewChat")}
+      >
+        <Text style={styles.fabText}>＋</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#000" },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: "#000",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#222",
+  },
+
+  headerAvatar: { width: 40, height: 40, borderRadius: 20 },
+
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  headerBadge: {
+    backgroundColor: "red",
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+
+  headerBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+
+  logout: { color: "#00ff88", fontWeight: "bold" },
+
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#222",
+  },
+
+  avatar: { width: 55, height: 55, borderRadius: 30 },
+
+  textContainer: { flex: 1, marginLeft: 15 },
+
+  name: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  message: { color: "#888", marginTop: 4 },
+
+  unreadText: { color: "#fff", fontWeight: "bold" },
+
+  badge: {
+    backgroundColor: "#00ff88",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  badgeText: {
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+
+  fab: {
+    position: "absolute",
+    bottom: 25,
+    right: 25,
+    backgroundColor: "#00ff88",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+  },
+
+  fabText: {
+    fontSize: 30,
+    color: "#000",
+    marginTop: -2,
+  },
+});

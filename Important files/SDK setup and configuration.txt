@@ -1,0 +1,15 @@
+SDK setup and configuration
+Need to reconfigure the Firebase SDKs for your app? Revisit the SDK setup instructions or just download the configuration file containing keys and identifiers for your app.
+App ID 
+1:650888533807:android:b8d383565d71f7cadbb3da
+App nickname
+nukkad
+Package name
+com.nukkadmobile
+SHA certificate fingerprints 
+Type 
+Actions
+46:f8:d8:cd:85:cb:5d:3c:33:04:9c:fe:16:63:97:82:da:62:6f:cc
+SHA-1	
+e2:c7:08:99:66:2c:30:c9:e4:f4:a1:31:22:57:ae:cb:e2:66:c5:0f:a7:52:30:9d:2d:a0:77:cb:ab:a5:2a:8c
+SHA-256	

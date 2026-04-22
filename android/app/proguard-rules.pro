@@ -1,10 +1,37 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# React Native
+-keep class com.facebook.react.** { *; }
+-dontwarn com.facebook.react.**
 
-# Add any project specific keep options here:
+# WebRTC
+-keep class org.webrtc.** { *; }
+-dontwarn org.webrtc.**
+
+# Firebase
+-keep class com.google.firebase.** { *; }
+-keep class com.google.firebase.messaging.** { *; }
+-dontwarn com.google.firebase.**
+
+# Google Play services
+-keep class com.google.android.gms.** { *; }
+
+# Keep annotations
+-keepattributes *Annotation*
+
+# Native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Parcelable
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator *;
+}
+
+# Kotlin
+-keep class kotlin.Metadata { *; }
+
+# Notifee
+-keep class app.notifee.** { *; }
+
+# Classes with @Keep
+-keep @androidx.annotation.Keep class * { *; }

@@ -1,0 +1,38 @@
+# ----------------------------------------
+# NUKKAD TURN/STUN Server Configuration
+# ----------------------------------------
+
+listening-port=3479
+tls-listening-port=5350
+fingerprint
+lt-cred-mech
+realm=nukkad.vemeet.online
+user=nukkad:MyTurnPass@2025
+external-ip=192.248.185.50
+log-file=/var/log/turnserver-nukkad.log
+simple-log
+
+# === SSL Certificates (Let's Encrypt) ===
+cert=/etc/letsencrypt/live/nukkad.vemeet.online/fullchain.pem
+pkey=/etc/letsencrypt/live/nukkad.vemeet.online/privkey.pem
+
+# === Network ===
+listening-ip=192.248.185.50
+relay-ip=192.248.185.50
+
+# === Security ===
+no-loopback-peers
+no-multicast-peers
+cli-password=NUKKADadmin@2025
+
+
+
+🔍 Verification Summary
+Feature	Status	Details
+TURN/STUN service	✅ Running	turnserver daemon active
+IP Bound	✅ 192.248.185.50	correct external IP
+TLS + DTLS (SSL)	✅ Enabled	cert + key loaded successfully
+Ports	✅ Listening	3479 (UDP/TCP) and 5350 (TLS)
+Realm	✅ Set	nukkad.vemeet.online
+Auth user	✅ nukkad : MyTurnPass@2025	
+Config path	✅ /etc/turnserver-nukkad.conf	

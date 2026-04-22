@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "650888533807",
+    "project_id": "nukkad-edc40",
+    "storage_bucket": "nukkad-edc40.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650888533807:android:b8d383565d71f7cadbb3da",
+        "android_client_info": {
+          "package_name": "com.nukkadmobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nukkadmobile",
+            "certificate_hash": "d8e6941612166bce4d7bbe5aae9c4a35c0ab49ad"
+          }
+        },
+        {
+          "client_id": "650888533807-qntv4rrek2qustv9a1okgs0b6u72pe5h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDolW24fWbxNxuJMPJ6g27eKqOCqCRBi9M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "650888533807-qntv4rrek2qustv9a1okgs0b6u72pe5h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

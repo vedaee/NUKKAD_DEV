@@ -1,0 +1,63 @@
+Google cloud Api key
+NUKKAD Translate
+
+AIzaSyAA2ek6Awufk39u-6d7YAnQadp0fBGF5iw
+
+AIzaSyAA2ek6Awufk39u-6d7YAnQadp0fBGF5iw
+
+import axios from "axios";
+
+/* ==============================
+   TRANSLATE MESSAGE (FINAL)
+==============================*/
+const translateMessage = async (message, targetLang) => {
+  if (!message || !message.id || !message.text) return;
+
+  try {
+    // 🔹 INSERT YOUR GOOGLE TRANSLATE API KEY HERE
+    const API_KEY = "AIzaSyAA2ek6Awufk39u-6d7YAnQadp0fBGF5iw";
+
+    // 🔹 Call Google Translate API
+    const response = await axios.post(
+      `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`,
+      {
+        q: message.text,
+        target: targetLang,
+        format: "text",
+      }
+    );
+
+    // 🔹 Get translated text
+    const translatedText =
+      response.data?.data?.translations?.[0]?.translatedText || "";
+
+    if (!translatedText) return;
+
+    // 🔹 Save translated text to Firestore
+    await firestore()
+      .collection("chats")
+      .doc(chatId)
+      .collection("messages")
+      .doc(message.id)
+      .update({
+        translatedText,
+        translatedTo: targetLang,
+      });
+
+    // 🔹 Update local messages state so UI refreshes immediately
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === message.id ? { ...m, translatedText } : m
+      )
+    );
+
+    console.log("Message translated:", translatedText);
+  } catch (error) {
+    console.log("Translation error:", error);
+    Alert.alert("Translation failed", "Check your API key and network.");
+  }
+};
+
+
+
+https://translation.googleapis.com/language/translate/v2?key=AIzaSyAA2ek6Awufk39u-6d7YAnQadp0fBGF5iw&q=Hello%20world&target=hi

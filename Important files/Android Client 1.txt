@@ -1,0 +1,19 @@
+Android Client 1
+
+Client ID:
+
+650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com
+
+Api Key :
+
+AIzaSyDolW24fWbxNxuJMPJ6g27eKqOCqCRBi9M
+
+650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com
+
+650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com
+
+{"installed":{"client_id":"650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com","project_id":"nukkad-edc40","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}
+
+650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com
+
+{"installed":{"client_id":"650888533807-41564f6mcthnrkkqu8mphe0q44qdm9qe.apps.googleusercontent.com","project_id":"nukkad-edc40","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}

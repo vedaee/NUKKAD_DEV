@@ -1,0 +1,55 @@
+PowerShell / terminal script for Windows that will:
+
+Clean your Android build
+
+Build the release AAB
+
+Convert it to a universal APK
+
+Install it directly on your connected device
+
+# Navigate to Android folder
+cd C:\NukkadMobile\android
+
+# Clean previous builds
+.\gradlew clean
+
+# Build release bundle (AAB)
+.\gradlew bundleRelease
+
+# Path to bundletool.jar (download from https://developer.android.com/studio/command-line/bundletool)
+$BUNDLETOOL = "C:\path\to\bundletool.jar"
+
+# Build universal APK from AAB
+java -jar $BUNDLETOOL build-apks `
+  --bundle=app\build\outputs\bundle\release\app-release.aab `
+  --output=app.apks `
+  --mode=universal `
+  --ks=app\nukkad-release-key.jks `
+  --ks-key-alias=nukkadkey `
+  --ks-pass=pass:@United61 `
+  --key-pass=pass:@United61
+
+# Extract APK from the .apks file
+Expand-Archive -Path app.apks -DestinationPath app_apks -Force
+
+# Install APK on connected device
+adb install -r app_apks\universal.apk
+
+Write-Host "✅ Release APK installed. Now test Firebase OTP with real phone numbers."
+
+Notes:
+
+Replace YOUR_KEYSTORE_PASSWORD and YOUR_KEY_PASSWORD with the ones you used for nukkad-release-key.jks.
+
+Replace $BUNDLETOOL path with where you downloaded bundletool.jar.
+
+Make sure USB debugging is enabled on your Android device and it’s connected via ADB.
+
+After running this:
+
+The app on your device is signed with your release keystore.
+
+Firebase Phone Auth will work for real phone numbers.
+
+Debug builds can still be tested using testing phone numbers in Firebase.

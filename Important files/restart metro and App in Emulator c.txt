@@ -1,0 +1,84 @@
+restart metro and App in Emulator commands...
+
+.\gradlew.bat clean...........in Android terminal
+
+npx react-native start --reset-cache .......on nukkadmobile terminal
+
+npx react-native run-android....... on new terminal on nukkadmobile app.
+
+adb install app-release.apk
+
+adb install android\app\build\outputs\apk\release\app-release.apk
+
+npx react-native run-android --deviceId RZ8M936GPYB
+
+npx react-native run-android --deviceId a8a9ef290223 
+
+npx react-native run-android --deviceId SKCQIRSKNRS4G6QS 
+
+adb devices
+
+icacls node_modules /grant "TRAVEDEAL":F /t
+
+cd android
+.\gradlew.bat clean
+cd ..
+npx react-native run-android --deviceId RZ8M936GPYB
+
+cd android
+.\gradlew clean
+cd ..
+
+cd C:\NukkadMobile\android
+.\gradlew clean
+.\gradlew assembleDebug
+
+
+cd android
+.\gradlew signingReport
+
+cd android
+.\gradlew assembleRelease
+
+cd android
+.\gradlew bundleRelease
+
+
+PS C:\NukkadMobile\android> gradlew assembleRelease
+gradlew : The term 'gradlew' is not recognized as the name of a cmdlet, function, script file, or operable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ gradlew assembleRelease
++ ~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (gradlew:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+
+Suggestion [3,General]: The command gradlew was not found, but does exist in the current location. Windows PowerShell does not load commands from the current location by default. If you trust this command, instead type: ".\gradlew". See "get-help about_Command_Precedence" for more details.
+PS C:\NukkadMobile\android>
+
+
+
+# reset-build.ps1
+# Use this script to clean and rebuild NUKKAD React Native project
+
+Write-Host "🧹 Cleaning Node modules and caches..."
+rm -r -Force .\node_modules
+rm -Force package-lock.json
+npm cache clean --force
+
+Write-Host "📦 Installing dependencies..."
+npm install
+
+Write-Host "⚙️ Cleaning Android build..."
+cd android
+.\gradlew clean
+cd ..
+
+Write-Host "🧹 Resetting Metro Bundler cache..."
+npx react-native start --reset-cache --minify &
+
+Write-Host "📱 Rebuilding the app for Android..."
+npx react-native run-android
+
+Write-Host "✅ Done! App should launch on emulator/device."

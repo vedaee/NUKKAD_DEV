@@ -1,0 +1,24 @@
+App signing: 
+
+App signing key certificate
+
+MD5 certificate fingerprint : 9B:02:DD:7C:65:18:7E:5F:8B:FD:26:6E:94:2D:A8:7C
+
+SHA-1 certificate fingerprint
+FE:83:2A:9E:4A:AF:3E:F5:4C:EA:0B:84:96:47:AC:BA:6B:AC:A4:DB
+
+SHA-256 certificate fingerprint
+25:A6:6D:D5:6D:A9:89:86:3B:E6:D2:53:6A:28:64:EA:80:6B:77:19:79:A9:A5:3F:AB:71:C7:F0:34:BC:B1:F6
+
+
+Upload key certificate
+
+MD5 certificate fingerprint
+9B:44:29:3C:65:DC:C1:6C:9C:70:BB:13:4B:29:BC:7D
+
+SHA-1 certificate fingerprint
+6A:AE:43:81:D7:37:ED:4C:BB:00:71:08:51:2E:3B:7D:9E:CC:74:F4
+
+SHA-256 certificate fingerprint
+D5:FD:72:95:AD:AA:E4:35:83:79:47:48:30:82:92:0C:79:F2:3E:E3:BD:C5:4A:B5:69:FE:D4:9F:3A:99:15:D4
+
