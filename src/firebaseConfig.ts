@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 
 // Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAD-iS1ezpp0QpXc-1imgC8LaxTSFp7ftc",
+  apiKey: process.env.FIREBASE_API_KEY || "FALLBACK_KEY",
   authDomain: "nukkad-edc40.firebaseapp.com",
   projectId: "nukkad-edc40",
   storageBucket: "nukkad-edc40.firebasestorage.app",
