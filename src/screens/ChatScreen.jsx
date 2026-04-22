@@ -720,7 +720,7 @@ const translateMessage = async (message, targetLang) => {
 
   try {
     // 🔹 INSERT YOUR GOOGLE TRANSLATE API KEY HERE
-    const API_KEY = "AIzaSyAA2ek6Awufk39u-6d7YAnQadp0fBGF5iw";
+    const API_KEY = process.env.GOOGLE_TRANSLATE_API_KEY || "";
 
     // 🔹 Call Google Translate API
     const response = await axios.post(
