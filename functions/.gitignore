@@ -1,2 +1,17 @@
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Firebase / Android sensitive files (optional but recommended)
+google-services.json
+
+# Node modules
 node_modules/
-*.local
+
+# Build files
+dist/
+build/
+android/app/build/
+ios/build/

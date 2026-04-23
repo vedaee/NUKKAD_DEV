@@ -713,32 +713,34 @@ const openAttachmentMenu = () => {
   };
 
   /* ==============================
-   TRANSLATE MESSAGE (FINAL)
+   TRANSLATE MESSAGE (FINAL FIXED)
 ==============================*/
 const translateMessage = async (message, targetLang) => {
   if (!message || !message.id || !message.text) return;
+  if (message.translatedTo === targetLang) {
+  console.log("Already translated");
+  return;
+}
 
   try {
-    // 🔹 INSERT YOUR GOOGLE TRANSLATE API KEY HERE
-    const API_KEY = process.env.GOOGLE_TRANSLATE_API_KEY || "";
-
-    // 🔹 Call Google Translate API
     const response = await axios.post(
-      `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`,
+      "https://translatetext-6w6oihyfea-uc.a.run.app",
       {
-        q: message.text,
+        text: message.text,
         target: targetLang,
-        format: "text",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    // 🔹 Get translated text
-    const translatedText =
-      response.data?.data?.translations?.[0]?.translatedText || "";
+    const translatedText = response.data?.translated || "";
 
     if (!translatedText) return;
 
-    // 🔹 Save translated text to Firestore
+    // 🔹 Save to Firestore
     await firestore()
       .collection("chats")
       .doc(chatId)
@@ -749,19 +751,22 @@ const translateMessage = async (message, targetLang) => {
         translatedTo: targetLang,
       });
 
-    // 🔹 Update local messages state so UI refreshes immediately
+    // 🔹 Update UI instantly
     setMessages((prev) =>
       prev.map((m) =>
         m.id === message.id ? { ...m, translatedText } : m
       )
     );
 
-    console.log("Message translated:", translatedText);
+    console.log("✅ Message translated:", translatedText);
+
   } catch (error) {
-    console.log("Translation error:", error);
-    Alert.alert("Translation failed", "Check your API key and network.");
+    console.log("❌ Translation error:", error?.response?.data || error.message);
+    Alert.alert("Translation failed", "Server error or network issue.");
   }
 };
+
+
 
 
   /* ==============================

@@ -121,9 +121,10 @@ export default function App() {
     try {
       await messaging().requestPermission();
 
+      await messaging().registerDeviceForRemoteMessages();
       const token = await messaging().getToken();
 
-      if (token) {
+      if (token && token.length > 20) {
         await firestore()
           .collection("users")
           .doc(uid)
@@ -143,6 +144,36 @@ export default function App() {
       console.log("❌ FCM ERROR:", err);
     }
   };
+
+  // -------------------------------
+// 🔥 FCM TOKEN REFRESH FIX (CRITICAL)
+// -------------------------------
+useEffect(() => {
+  const unsubscribe = messaging().onTokenRefresh(async (token) => {
+    try {
+      const currentUser = auth().currentUser;
+
+      if (currentUser?.uid && token) {
+        await firestore()
+          .collection("users")
+          .doc(currentUser.uid)
+          .set(
+            {
+              fcmToken: token,
+              updatedAt: firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+        console.log("♻️ FCM TOKEN UPDATED (REFRESH)");
+      }
+    } catch (err) {
+      console.log("❌ TOKEN REFRESH ERROR:", err);
+    }
+  });
+
+  return unsubscribe;
+}, []);
 
   // -------------------------------
   // 🔥 AUTH LISTENER + AUTO MIGRATION
