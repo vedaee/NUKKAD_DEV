@@ -21,30 +21,33 @@ exports.translatetext = onRequest(
 
       console.log("INPUT:", text, target);
 
-      // ❗ IMPORTANT: DO NOT CALL YOUR OWN URL HERE
-      // 👉 Replace with your REAL translation API URL
+      // ✅ REAL TRANSLATION API CALL (SAFE VERSION)
       const response = await axios.post(
-        "https://translatetext-6w6oihyfea-uc.a.run.app",
+        "https://translation.googleapis.com/language/translate/v2",
         {
-          text,
-          target,
+          q: text,
+          target: target,
+          format: "text",
         },
         {
-          headers: {
-            Authorization: `Bearer AIzaSyDm_1zod2BcKUYTLz1aZGIkPnHqT-IHsgI`,
+          params: {
+            key: process.env.GOOGLE_TRANSLATE_API_KEY,
           },
         }
       );
 
-      console.log("OUTPUT:", response.data);
+      const translated =
+        response.data?.data?.translations?.[0]?.translatedText || text;
+
+      console.log("OUTPUT:", translated);
 
       res.json({
-        translated: response.data.translated || "no result",
+        translated,
       });
 
     } catch (error) {
       console.error("ERROR:", error.response?.data || error.message);
-      res.status(500).send(error.response?.data || error.message);
+      res.status(500).send(error.message);
     }
   }
 );
