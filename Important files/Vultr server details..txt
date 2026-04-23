@@ -1,9 +1,0 @@
-Vultr server details.
-Vultr Password..
-ssh root@192.248.185.50
-P.W. : +9kEW4ir!VQhNRb+
-
-/var/www/nukkad
-
-https://nukkad.vemeet.online/nukkad-delete-account.html
-
